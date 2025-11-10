@@ -1,0 +1,485 @@
+openapi: 3.0.3
+info:
+  title: Mango Products API
+  version: 1.0.0
+  description:
+    REST API for Mango products and prices management.
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Products
+    description: Product-related operations
+  - name: Prices
+    description: Product price-related operations
+
+paths:
+  /products:
+    post:
+      tags:
+        - Products
+      summary: Create a new product
+      description: Creates a new product with name and description
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+            examples:
+              example1:
+                summary: Zapatillas deportivas
+                value:
+                  name: "Zapatillas deportivas"
+                  description: "Modelo 2025 edición limitada"
+              example2:
+                summary: Camiseta básica
+                value:
+                  name: "Camiseta básica"
+                  description: "Algodón 100% orgánico"
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    name: "Zapatillas deportivas"
+                    description: "Modelo 2025 edición limitada"
+        '400':
+          description: Invalid request (validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validationError:
+                  value:
+                    timestamp: "2024-04-15T10:30:00Z"
+                    status: 400
+                    error: "Bad Request"
+                    message: "Product name is required"
+                    path: "/products"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get a product by ID
+      description: Gets basic product details (without price history)
+      operationId: getProductById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  value:
+                    timestamp: "2024-04-15T10:30:00Z"
+                    status: 404
+                    error: "Not Found"
+                    message: "Product with ID 999 not found"
+                    path: "/products/999"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{id}/prices:
+    post:
+      tags:
+        - Prices
+      summary: Add a price to a product
+      description: |
+        Adds a new price with temporal validity to an existing product.
+        
+        **Validations:**
+        - There must be no date overlap with other prices of the same product
+        - `initDate` must be before `endDate` (if both exist)
+        - `endDate` can be `null` (price with no end date)
+        - The product must exist
+      operationId: addPriceToProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPriceRequest'
+            examples:
+              priceWithEndDate:
+                summary: Price with end date
+                value:
+                  value: 99.99
+                  initDate: "2024-01-01"
+                  endDate: "2024-06-30"
+              priceWithoutEndDate:
+                summary: Price without end date (valid indefinitely)
+                value:
+                  value: 149.99
+                  initDate: "2024-07-01"
+                  endDate: null
+      responses:
+        '201':
+          description: Price added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    value: 99.99
+                    initDate: "2024-01-01"
+                    endDate: "2024-06-30"
+        '400':
+          description: Invalid request (validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidDateRange:
+                  value:
+                    timestamp: "2024-04-15T10:30:00Z"
+                    status: 400
+                    error: "Bad Request"
+                    message: "Start date must be before end date"
+                    path: "/products/1/prices"
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - date overlap
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                overlapError:
+                  value:
+                    timestamp: "2024-04-15T10:30:00Z"
+                    status: 409
+                    error: "Conflict"
+                    message: "A price already exists for the specified date range"
+                    path: "/products/1/prices"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Prices
+      summary: Get prices for a product
+      description: |
+        Gets the complete price history of a product or the current price on a specific date.
+        
+        - If the `date` parameter is provided, returns only the current price on that date
+        - If `date` is not provided, returns the complete price history
+      operationId: getProductPrices
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+        - name: date
+          in: query
+          required: false
+          description: Date to query the current price (format YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2024-04-15"
+      responses:
+        '200':
+          description: Price(s) found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CurrentPriceResponse'
+                  - $ref: '#/components/schemas/ProductPriceHistoryResponse'
+              examples:
+                currentPrice:
+                  summary: Current price on a specific date (with date parameter)
+                  value:
+                    value: 99.99
+                priceHistory:
+                  summary: Complete price history (without date parameter)
+                  value:
+                    id: 1
+                    name: "Zapatillas deportivas"
+                    description: "Modelo 2025 edición limitada"
+                    prices:
+                      - id: 1
+                        value: 99.99
+                        initDate: "2024-01-01"
+                        endDate: "2024-06-30"
+                      - id: 2
+                        value: 149.99
+                        initDate: "2024-07-01"
+                        endDate: null
+        '404':
+          description: Product not found or no current price on the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                productNotFound:
+                  value:
+                    timestamp: "2024-04-15T10:30:00Z"
+                    status: 404
+                    error: "Not Found"
+                    message: "Product with ID 999 not found"
+                    path: "/products/999/prices"
+                noPriceForDate:
+                  value:
+                    timestamp: "2024-04-15T10:30:00Z"
+                    status: 404
+                    error: "Not Found"
+                    message: "No current price exists for date 2023-01-01"
+                    path: "/products/1/prices?date=2023-01-01"
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidDateFormat:
+                  value:
+                    timestamp: "2024-04-15T10:30:00Z"
+                    status: 400
+                    error: "Bad Request"
+                    message: "Invalid date format. Use YYYY-MM-DD"
+                    path: "/products/1/prices?date=invalid"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Product name
+          example: "Zapatillas deportivas"
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed product description
+          example: "Modelo 2025 edición limitada"
+          nullable: true
+
+    ProductResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique product ID
+          example: 1
+        name:
+          type: string
+          description: Product name
+          example: "Zapatillas deportivas"
+        description:
+          type: string
+          description: Product description
+          example: "Modelo 2025 edición limitada"
+          nullable: true
+
+    AddPriceRequest:
+      type: object
+      required:
+        - value
+        - initDate
+      properties:
+        value:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Price value
+          example: 99.99
+        initDate:
+          type: string
+          format: date
+          description: Start date of validity (YYYY-MM-DD)
+          example: "2024-01-01"
+        endDate:
+          type: string
+          format: date
+          description: End date of validity (YYYY-MM-DD). Null for price with no end date
+          example: "2024-06-30"
+          nullable: true
+
+    PriceResponse:
+      type: object
+      required:
+        - id
+        - value
+        - initDate
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique price ID
+          example: 1
+        value:
+          type: number
+          format: double
+          description: Price value
+          example: 99.99
+        initDate:
+          type: string
+          format: date
+          description: Start date of validity
+          example: "2024-01-01"
+        endDate:
+          type: string
+          format: date
+          description: End date of validity
+          example: "2024-06-30"
+          nullable: true
+
+    CurrentPriceResponse:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: number
+          format: double
+          description: Current price value
+          example: 99.99
+
+    ProductPriceHistoryResponse:
+      type: object
+      required:
+        - id
+        - name
+        - prices
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique product ID
+          example: 1
+        name:
+          type: string
+          description: Product name
+          example: "Zapatillas deportivas"
+        description:
+          type: string
+          description: Product description
+          example: "Modelo 2025 edición limitada"
+          nullable: true
+        prices:
+          type: array
+          description: List of historical product prices
+          items:
+            $ref: '#/components/schemas/PriceResponse'
+
+    ErrorResponse:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2024-04-15T10:30:00Z"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 404
+        error:
+          type: string
+          description: Brief HTTP error description
+          example: "Not Found"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Product with ID 999 not found"
+        path:
+          type: string
+          description: Request path that generated the error
+          example: "/products/999"
+        details:
+          type: array
+          description: Additional error details (e.g. validation errors)
+          items:
+            type: string
+          example:
+            - "Field 'name' is required"
+            - "Field 'value' must be greater than 0"
+          nullable: true
+
