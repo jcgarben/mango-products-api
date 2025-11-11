@@ -19,6 +19,10 @@ public class Price {
         this.initDate = Objects.requireNonNull(initDate, "Init date cannot be null");
         this.endDate = endDate;
 
+        if (value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Price value must be greater than zero");
+        }
+
         if (endDate != null && endDate.isBefore(initDate)) {
             throw new IllegalArgumentException("End date must be after or equal to init date");
         }
@@ -32,8 +36,34 @@ public class Price {
         return new Price(id, productId, value, initDate, endDate);
     }
 
-    public boolean isActiveOn(LocalDate date) {
-        return !date.isBefore(initDate) && (endDate == null || !date.isAfter(endDate));
+    /**
+     * Determines if this price overlaps with another price.
+     * Two prices overlap if they share at least one day in common and belong to the same product.
+     *
+     * @param other the other price to compare with
+     * @return true if the prices overlap, false otherwise
+     */
+    public boolean overlaps(Price other) {
+        // No overlap if the other price is null or belongs to a different product
+        if (other == null || !this.productId.equals(other.productId)) {
+            return false;
+        }
+
+        // If this price has no end date (open-ended), it overlaps with any price
+        // that starts on or after this price's start date
+        if (this.endDate == null) {
+            return !other.initDate.isBefore(this.initDate);
+        }
+
+        // If the other price has no end date (open-ended), it overlaps if
+        // this price ends on or after the other price's start date
+        if (other.endDate == null) {
+            return !this.endDate.isBefore(other.initDate);
+        }
+
+        // Both prices have end dates - they overlap if one doesn't end before the other starts
+        // They do NOT overlap only if: this ends before other starts OR other ends before this starts
+        return !(this.endDate.isBefore(other.initDate) || other.endDate.isBefore(this.initDate));
     }
 
     public Long getId() {
