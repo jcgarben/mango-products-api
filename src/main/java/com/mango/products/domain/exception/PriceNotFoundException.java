@@ -1,0 +1,10 @@
+package com.mango.products.domain.exception;
+
+import java.time.LocalDate;
+
+public class PriceNotFoundException extends RuntimeException {
+
+    public PriceNotFoundException(Long productId, LocalDate date) {
+        super("No price found for product " + productId + " on date " + date);
+    }
+}
