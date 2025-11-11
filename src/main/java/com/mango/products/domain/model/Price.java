@@ -1,22 +1,16 @@
 package com.mango.products.domain.model;
 
-import lombok.Setter;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
 public class Price {
 
-    @Setter
     private Long id;
     private Long productId;
     private BigDecimal value;
     private LocalDate initDate;
     private LocalDate endDate;
-
-    protected Price() {
-    }
 
     private Price(Long id, Long productId, BigDecimal value, LocalDate initDate, LocalDate endDate) {
         this.id = id;
