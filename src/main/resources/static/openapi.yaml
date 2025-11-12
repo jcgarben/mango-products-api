@@ -147,15 +147,17 @@ paths:
               $ref: '#/components/schemas/AddPriceRequest'
             examples:
               priceWithEndDate:
-                summary: Price with end date
+                summary: Price with end date in EUR
                 value:
                   value: 99.99
+                  currency: "EUR"
                   initDate: "2024-01-01"
                   endDate: "2024-06-30"
               priceWithoutEndDate:
-                summary: Price without end date (valid indefinitely)
+                summary: Price without end date in USD (valid indefinitely)
                 value:
                   value: 149.99
+                  currency: "USD"
                   initDate: "2024-07-01"
                   endDate: null
       responses:
@@ -170,6 +172,7 @@ paths:
                   value:
                     id: 1
                     value: 99.99
+                    currency: "EUR"
                     initDate: "2024-01-01"
                     endDate: "2024-06-30"
         '400':
@@ -240,6 +243,14 @@ paths:
             type: string
             format: date
             example: "2024-04-15"
+        - name: currency
+          in: query
+          required: false
+          description: Currency filter (ISO 4217 code)
+          schema:
+            type: string
+            pattern: '^[A-Z]{3}$'
+            example: "EUR"
       responses:
         '200':
           description: Price(s) found
@@ -254,8 +265,9 @@ paths:
                   summary: Current price on a specific date (with date parameter)
                   value:
                     value: 99.99
+                    currency: "EUR"
                 priceHistory:
-                  summary: Complete price history (without date parameter)
+                  summary: Complete price history with multiple currencies
                   value:
                     id: 1
                     name: "Zapatillas deportivas"
@@ -263,10 +275,17 @@ paths:
                     prices:
                       - id: 1
                         value: 99.99
+                        currency: "EUR"
                         initDate: "2024-01-01"
                         endDate: "2024-06-30"
                       - id: 2
+                        value: 119.99
+                        currency: "USD"
+                        initDate: "2024-01-01"
+                        endDate: "2024-06-30"
+                      - id: 3
                         value: 149.99
+                        currency: "EUR"
                         initDate: "2024-07-01"
                         endDate: null
         '404':
@@ -356,6 +375,7 @@ components:
       type: object
       required:
         - value
+        - currency
         - initDate
       properties:
         value:
@@ -364,6 +384,11 @@ components:
           minimum: 0.01
           description: Price value
           example: 99.99
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: Currency code (ISO 4217 - 3 uppercase letters)
+          example: "EUR"
         initDate:
           type: string
           format: date
@@ -381,6 +406,7 @@ components:
       required:
         - id
         - value
+        - currency
         - initDate
       properties:
         id:
@@ -393,6 +419,10 @@ components:
           format: double
           description: Price value
           example: 99.99
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: "EUR"
         initDate:
           type: string
           format: date
@@ -409,12 +439,17 @@ components:
       type: object
       required:
         - value
+        - currency
       properties:
         value:
           type: number
           format: double
           description: Current price value
           example: 99.99
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: "EUR"
 
     ProductPriceHistoryResponse:
       type: object
