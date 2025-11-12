@@ -1,9 +1,6 @@
 package com.mango.products.infrastructure.rest.exception;
 
-import com.mango.products.domain.exception.PriceNotFoundException;
-import com.mango.products.domain.exception.PriceOverlapException;
-import com.mango.products.domain.exception.ProductAlreadyExistsException;
-import com.mango.products.domain.exception.ProductNotFoundException;
+import com.mango.products.domain.exception.*;
 import com.mango.products.infrastructure.rest.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,9 +43,14 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(InvalidCurrencyException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            InvalidCurrencyException ex, WebRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
-            Exception ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleGenericException(WebRequest request) {
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request);
     }
 

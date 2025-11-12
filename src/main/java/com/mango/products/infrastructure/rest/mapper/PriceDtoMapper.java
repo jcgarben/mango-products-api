@@ -16,6 +16,7 @@ public class PriceDtoMapper {
         PriceResponse response = new PriceResponse();
         response.setId(price.getId());
         response.setValue(price.getValue().doubleValue());
+        response.setCurrency(price.getCurrency().getCurrencyCode());
         response.setInitDate(price.getInitDate());
         response.setEndDate(price.getEndDate());
         return response;
@@ -24,6 +25,7 @@ public class PriceDtoMapper {
     public static GetProductPrices200Response toCurrentPriceResponse(Price price) {
         CurrentPriceResponse response = new CurrentPriceResponse();
         response.setValue(price.getValue().doubleValue());
+        response.setCurrency(price.getCurrency().getCurrencyCode());
         return response;
     }
 
