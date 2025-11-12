@@ -25,15 +25,19 @@ public class PriceEntity {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal value;
 
+    @Column(nullable = false, length = 3)
+    private String currency;
+
     @Column(name = "init_date", nullable = false)
     private LocalDate initDate;
 
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    public PriceEntity(Long productId, BigDecimal value, LocalDate initDate, LocalDate endDate) {
+    public PriceEntity(Long productId, BigDecimal value, String currency, LocalDate initDate, LocalDate endDate) {
         this.productId = productId;
         this.value = value;
+        this.currency = currency;
         this.initDate = initDate;
         this.endDate = endDate;
     }
