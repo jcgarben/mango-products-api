@@ -15,9 +15,19 @@ public interface JpaPriceRepository extends JpaRepository<PriceEntity, Long> {
 
     List<PriceEntity> findByProductIdOrderByInitDateDesc(Long productId);
 
+    List<PriceEntity> findByProductIdAndCurrencyOrderByInitDateDesc(Long productId, String currency);
+
     @Query("SELECT p FROM PriceEntity p WHERE p.productId = :productId " +
            "AND p.initDate <= :date " +
            "AND (p.endDate IS NULL OR p.endDate >= :date)")
-    Optional<PriceEntity> findByProductIdAndDate(@Param("productId") Long productId,
-                                                   @Param("date") LocalDate date);
+    List<PriceEntity> findByProductIdAndDate(@Param("productId") Long productId,
+                                              @Param("date") LocalDate date);
+
+    @Query("SELECT p FROM PriceEntity p WHERE p.productId = :productId " +
+           "AND p.currency = :currency " +
+           "AND p.initDate <= :date " +
+           "AND (p.endDate IS NULL OR p.endDate >= :date)")
+    Optional<PriceEntity> findByProductIdAndCurrencyAndDate(@Param("productId") Long productId,
+                                                              @Param("currency") String currency,
+                                                              @Param("date") LocalDate date);
 }

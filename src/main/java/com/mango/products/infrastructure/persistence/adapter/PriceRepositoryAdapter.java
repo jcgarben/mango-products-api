@@ -47,8 +47,24 @@ public class PriceRepositoryAdapter implements PriceRepository {
     }
 
     @Override
-    public Optional<Price> findByProductIdAndDate(Long productId, LocalDate date) {
+    public List<Price> findByProductIdAndCurrency(Long productId, String currencyCode) {
+        return jpaRepository.findByProductIdAndCurrencyOrderByInitDateDesc(productId, currencyCode)
+            .stream()
+            .map(PriceMapper::toDomain)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Price> findByProductIdAndDate(Long productId, LocalDate date) {
         return jpaRepository.findByProductIdAndDate(productId, date)
+            .stream()
+            .map(PriceMapper::toDomain)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Price> findByProductIdAndCurrencyAndDate(Long productId, String currencyCode, LocalDate date) {
+        return jpaRepository.findByProductIdAndCurrencyAndDate(productId, currencyCode, date)
             .map(PriceMapper::toDomain);
     }
 }

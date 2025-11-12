@@ -12,6 +12,10 @@ public interface PriceRepository {
 
     List<Price> findByProductId(Long productId);
 
-    Optional<Price> findByProductIdAndDate(Long productId, LocalDate date);
+    List<Price> findByProductIdAndCurrency(Long productId, String currencyCode);
+
+    List<Price> findByProductIdAndDate(Long productId, LocalDate date);
+
+    Optional<Price> findByProductIdAndCurrencyAndDate(Long productId, String currencyCode, LocalDate date);
 }
 
