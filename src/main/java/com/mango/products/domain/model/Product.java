@@ -8,9 +8,6 @@ public class Product {
     private String name;
     private String description;
 
-    protected Product() {
-    }
-
     private Product(Long id, String name, String description) {
         this.id = id;
         this.name = Objects.requireNonNull(name, "Product name cannot be null");

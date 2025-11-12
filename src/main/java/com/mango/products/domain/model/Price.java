@@ -49,6 +49,12 @@ public class Price {
             return false;
         }
 
+        // If both prices are open-ended (no end date), they always overlap
+        // because both extend indefinitely into the future
+        if (this.endDate == null && other.endDate == null) {
+            return true;
+        }
+
         // If this price has no end date (open-ended), it overlaps with any price
         // that starts on or after this price's start date
         if (this.endDate == null) {
