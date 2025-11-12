@@ -20,14 +20,45 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: products-app
+    container_name: product-api
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_JPA_SHOW_SQL: false
     ports:
       - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  k6:
+    build:
+      context: .
+      dockerfile: Dockerfile.k6
+    container_name: product-k6-benchmark
+    depends_on:
+      app:
+        condition: service_started
+    environment:
+      K6_OUT: json=/tmp/k6-results.json
+    volumes:
+      - ./k6-results:/tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
 
 volumes:
   postgres_data:
