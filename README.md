@@ -397,12 +397,14 @@ docker-compose --profile benchmark up --build
 **What it does:**
 - Starts PostgreSQL + API
 - Waits for application to be healthy
-- Executes k6 benchmark for **1 minute**:
-  - Up to **100 concurrent users** (peak)
-  - **~10,000 HTTP requests**
-  - **~5,000 iterations**
-  - Mixed scenarios: 30% CREATE, 40% GET products, 30% GET prices
-
+- Executes k6 benchmark for **1 minute** (60s total):
+  - **Ramp-up stages**: 20 → 50 → 100 → 20 → 0 users
+  - **Peak load**: 100 concurrent users (at 15s mark)
+  - **Mixed scenarios**:
+    - **30%** Create Product + Add Price (with random currency: EUR/USD/GBP)
+    - **40%** Get Product by ID
+    - **30%** Get Product Prices (with optional currency/date filters)
+  - **Sleep**: 0.1s between requests per virtual user
 
 **Results saved to:** `./k6-results/k6-results.json`
 
