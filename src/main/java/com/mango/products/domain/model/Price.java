@@ -2,6 +2,7 @@ package com.mango.products.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Currency;
 import java.util.Objects;
 
 public class Price {
@@ -9,13 +10,15 @@ public class Price {
     private Long id;
     private Long productId;
     private BigDecimal value;
+    private Currency currency;
     private LocalDate initDate;
     private LocalDate endDate;
 
-    private Price(Long id, Long productId, BigDecimal value, LocalDate initDate, LocalDate endDate) {
+    private Price(Long id, Long productId, BigDecimal value, Currency currency, LocalDate initDate, LocalDate endDate) {
         this.id = id;
         this.productId = Objects.requireNonNull(productId, "Product ID cannot be null");
         this.value = Objects.requireNonNull(value, "Price value cannot be null");
+        this.currency = Objects.requireNonNull(currency, "Currency cannot be null");
         this.initDate = Objects.requireNonNull(initDate, "Init date cannot be null");
         this.endDate = endDate;
 
@@ -28,17 +31,18 @@ public class Price {
         }
     }
 
-    public static Price create(Long productId, BigDecimal value, LocalDate initDate, LocalDate endDate) {
-        return new Price(null, productId, value, initDate, endDate);
+    public static Price create(Long productId, BigDecimal value, Currency currency, LocalDate initDate, LocalDate endDate) {
+        return new Price(null, productId, value, currency, initDate, endDate);
     }
 
-    public static Price of(Long id, Long productId, BigDecimal value, LocalDate initDate, LocalDate endDate) {
-        return new Price(id, productId, value, initDate, endDate);
+    public static Price of(Long id, Long productId, BigDecimal value, Currency currency, LocalDate initDate, LocalDate endDate) {
+        return new Price(id, productId, value, currency, initDate, endDate);
     }
 
     /**
      * Determines if this price overlaps with another price.
-     * Two prices overlap if they share at least one day in common and belong to the same product.
+     * Two prices overlap if they share at least one day in common, belong to the same product,
+     * and are in the same currency.
      *
      * @param other the other price to compare with
      * @return true if the prices overlap, false otherwise
@@ -46,6 +50,12 @@ public class Price {
     public boolean overlaps(Price other) {
         // No overlap if the other price is null or belongs to a different product
         if (other == null || !this.productId.equals(other.productId)) {
+            return false;
+        }
+
+        // No overlap if prices are in different currencies
+        // This allows having EUR and USD prices for the same period
+        if (!this.currency.equals(other.currency)) {
             return false;
         }
 
@@ -84,6 +94,10 @@ public class Price {
         return value;
     }
 
+    public Currency getCurrency() {
+        return currency;
+    }
+
     public LocalDate getInitDate() {
         return initDate;
     }
@@ -106,8 +120,8 @@ public class Price {
 
     @Override
     public String toString() {
-        return "Price{id=" + id + ", productId=" + productId + ", value=" + value + ", initDate=" + initDate +
-                ", endDate=" + endDate + "}";
+        return "Price{id=" + id + ", productId=" + productId + ", value=" + value + ", currency=" + currency.getCurrencyCode() +
+                ", initDate=" + initDate + ", endDate=" + endDate + "}";
     }
 }
 
