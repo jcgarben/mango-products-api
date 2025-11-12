@@ -221,10 +221,14 @@ paths:
         - Prices
       summary: Get prices for a product
       description: |
-        Gets the complete price history of a product or the current price on a specific date.
+        Gets the complete price history of a product or the current price(s) on a specific date.
         
-        - If the `date` parameter is provided, returns only the current price on that date
-        - If `date` is not provided, returns the complete price history
+        - If the `date` parameter is provided:
+          - With `currency`: returns only the current price for that currency on that date
+          - Without `currency`: returns all prices available on that date (one per currency)
+        - If `date` is not provided:
+          - With `currency`: returns the complete price history for that currency
+          - Without `currency`: returns the complete price history for all currencies
       operationId: getProductPrices
       parameters:
         - name: id
@@ -261,11 +265,28 @@ paths:
                   - $ref: '#/components/schemas/CurrentPriceResponse'
                   - $ref: '#/components/schemas/ProductPriceHistoryResponse'
               examples:
-                currentPrice:
-                  summary: Current price on a specific date (with date parameter)
+                currentPriceSingleCurrency:
+                  summary: Current price on a specific date with single currency (with date parameter)
                   value:
                     value: 99.99
                     currency: "EUR"
+                currentPricesMultipleCurrencies:
+                  summary: Current prices on a specific date with multiple currencies (with date parameter, no currency filter)
+                  value:
+                    id: 1
+                    name: "Zapatillas deportivas"
+                    description: "Modelo 2025 edición limitada"
+                    prices:
+                      - id: 1
+                        value: 99.99
+                        currency: "EUR"
+                        initDate: "2024-01-01"
+                        endDate: "2024-06-30"
+                      - id: 2
+                        value: 119.99
+                        currency: "USD"
+                        initDate: "2024-01-01"
+                        endDate: "2024-06-30"
                 priceHistory:
                   summary: Complete price history with multiple currencies
                   value:
