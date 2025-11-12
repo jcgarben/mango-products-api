@@ -1,0 +1,11 @@
+FROM grafana/k6:0.54.0
+
+# Copy the test script
+COPY k6-test.js /scripts/test.js
+
+# Set working directory
+WORKDIR /scripts
+
+# Run k6 test - shows progress bar and final summary
+CMD ["run", "--out", "json=/tmp/k6-results.json", "/scripts/test.js"]
+
