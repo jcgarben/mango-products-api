@@ -20,6 +20,9 @@ RUN mvn clean package -DskipTests
 FROM amazoncorretto:21
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN yum install -y curl && yum clean all
+
 # Copy JAR generated from build stage
 COPY --from=build /app/target/products-api-0.0.1-SNAPSHOT.jar app.jar
 
