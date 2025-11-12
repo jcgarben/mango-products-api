@@ -15,6 +15,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   app:
     build:
@@ -40,10 +48,12 @@ services:
           cpus: '1.0'
           memory: 1G
         reservations:
-          cpus: '0.25'
-          memory: 256M
+          cpus: '0.5'
+          memory: 512M
 
   k6:
+    profiles:
+      - benchmark
     build:
       context: .
       dockerfile: Dockerfile.k6
@@ -58,11 +68,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '1.0'
+          memory: 1G
         reservations:
-          cpus: '0.1'
-          memory: 128M
+          cpus: '0.25'
+          memory: 256M
 
 volumes:
   postgres_data:
