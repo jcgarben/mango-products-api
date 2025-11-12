@@ -1,10 +1,17 @@
--- Insert example products
-INSERT INTO products (name, description)
-VALUES
-  ('Zapatillas deportivas', 'Modelo 2025 edición limitada'),
-  ('Camiseta básica', 'Algodón 100% orgánico');
+-- Clean existing seed data (idempotent script)
+DELETE FROM product_prices;
+DELETE FROM products;
 
--- Product 1 prices
+-- Insert example products
+INSERT INTO products (id, name, description)
+VALUES
+  (1, 'Zapatillas deportivas', 'Modelo 2025 edición limitada'),
+  (2, 'Camiseta básica', 'Algodón 100% orgánico');
+
+-- Set sequence to start from 3 so k6 benchmark can create products without collision
+SELECT setval('products_id_seq', 3, false);
+
+-- Product 1 prices (historical data example)
 INSERT INTO product_prices (product_id, value, init_date, end_date)
 VALUES
   (1, 10.00, DATE '2022-01-01', DATE '2022-01-31'),
