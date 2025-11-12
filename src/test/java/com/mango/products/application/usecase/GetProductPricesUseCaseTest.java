@@ -4,7 +4,6 @@ import com.mango.products.application.port.out.PriceRepository;
 import com.mango.products.application.port.out.ProductRepository;
 import com.mango.products.domain.exception.ProductNotFoundException;
 import com.mango.products.domain.model.Price;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,8 +14,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Currency;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -37,9 +36,10 @@ class GetProductPricesUseCaseTest {
     void givenExistingProductWithPrices_whenGettingAllPrices_thenShouldReturnAllPrices() {
         // Given
         Long productId = 1L;
-        Price price1 = Price.of(1L, productId, BigDecimal.valueOf(10.99),
+        Currency currency = Currency.getInstance("EUR");
+        Price price1 = Price.of(1L, productId, BigDecimal.valueOf(10.99), currency,
             LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
-        Price price2 = Price.of(2L, productId, BigDecimal.valueOf(12.99),
+        Price price2 = Price.of(2L, productId, BigDecimal.valueOf(12.99), currency,
             LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 28));
         List<Price> prices = Arrays.asList(price1, price2);
 
@@ -97,49 +97,52 @@ class GetProductPricesUseCaseTest {
     }
 
     @Test
-    void givenExistingProductAndDate_whenGettingCurrentPrice_thenShouldReturnPrice() {
+    void givenExistingProductAndDate_whenGettingCurrentPrices_thenShouldReturnPrices() {
         // Given
         Long productId = 1L;
         LocalDate date = LocalDate.of(2025, 1, 15);
-        Price price = Price.of(1L, productId, BigDecimal.valueOf(10.99),
+        Currency currency = Currency.getInstance("EUR");
+        Price price = Price.of(1L, productId, BigDecimal.valueOf(10.99), currency,
             LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
         when(productRepository.existsById(productId)).thenReturn(true);
-        when(priceRepository.findByProductIdAndDate(productId, date)).thenReturn(Optional.of(price));
+        when(priceRepository.findByProductIdAndDate(productId, date)).thenReturn(Collections.singletonList(price));
 
         // When
-        Optional<Price> result = getProductPricesUseCase.getCurrentPrice(productId, date);
+        List<Price> result = getProductPricesUseCase.getCurrentPrices(productId, date);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(price.getId(), result.get().getId());
-        assertEquals(price.getValue(), result.get().getValue());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(price.getId(), result.get(0).getId());
+        assertEquals(price.getValue(), result.get(0).getValue());
 
         verify(productRepository, times(1)).existsById(productId);
         verify(priceRepository, times(1)).findByProductIdAndDate(productId, date);
     }
 
     @Test
-    void givenExistingProductButNoPriceOnDate_whenGettingCurrentPrice_thenShouldReturnEmpty() {
+    void givenExistingProductButNoPriceOnDate_whenGettingCurrentPrices_thenShouldReturnEmptyList() {
         // Given
         Long productId = 1L;
         LocalDate date = LocalDate.of(2025, 3, 15);
 
         when(productRepository.existsById(productId)).thenReturn(true);
-        when(priceRepository.findByProductIdAndDate(productId, date)).thenReturn(Optional.empty());
+        when(priceRepository.findByProductIdAndDate(productId, date)).thenReturn(Collections.emptyList());
 
         // When
-        Optional<Price> result = getProductPricesUseCase.getCurrentPrice(productId, date);
+        List<Price> result = getProductPricesUseCase.getCurrentPrices(productId, date);
 
         // Then
-        assertFalse(result.isPresent());
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
 
         verify(productRepository, times(1)).existsById(productId);
         verify(priceRepository, times(1)).findByProductIdAndDate(productId, date);
     }
 
     @Test
-    void givenNonExistingProduct_whenGettingCurrentPrice_thenShouldThrowException() {
+    void givenNonExistingProduct_whenGettingCurrentPrices_thenShouldThrowException() {
         // Given
         Long productId = 999L;
         LocalDate date = LocalDate.of(2025, 1, 15);
@@ -149,11 +152,40 @@ class GetProductPricesUseCaseTest {
         // When & Then
         ProductNotFoundException exception = assertThrows(
             ProductNotFoundException.class,
-            () -> getProductPricesUseCase.getCurrentPrice(productId, date)
+            () -> getProductPricesUseCase.getCurrentPrices(productId, date)
         );
 
         assertTrue(exception.getMessage().contains("999"));
         verify(productRepository, times(1)).existsById(productId);
         verify(priceRepository, never()).findByProductIdAndDate(any(), any());
+    }
+
+    @Test
+    void givenMultipleCurrenciesOnDate_whenGettingCurrentPrices_thenShouldReturnAllPrices() {
+        // Given
+        Long productId = 1L;
+        LocalDate date = LocalDate.of(2025, 1, 15);
+        Currency eur = Currency.getInstance("EUR");
+        Currency usd = Currency.getInstance("USD");
+
+        Price priceEur = Price.of(1L, productId, BigDecimal.valueOf(10.99), eur,
+            LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
+        Price priceUsd = Price.of(2L, productId, BigDecimal.valueOf(12.99), usd,
+            LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
+
+        when(productRepository.existsById(productId)).thenReturn(true);
+        when(priceRepository.findByProductIdAndDate(productId, date))
+            .thenReturn(Arrays.asList(priceEur, priceUsd));
+
+        // When
+        List<Price> result = getProductPricesUseCase.getCurrentPrices(productId, date);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(priceEur.getId(), result.get(0).getId());
+        assertEquals(priceUsd.getId(), result.get(1).getId());
+        verify(productRepository, times(1)).existsById(productId);
+        verify(priceRepository, times(1)).findByProductIdAndDate(productId, date);
     }
 }

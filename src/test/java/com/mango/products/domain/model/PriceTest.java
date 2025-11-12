@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Currency;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,16 +19,18 @@ class PriceTest {
             // Given
             Long productId = 1L;
             BigDecimal value = BigDecimal.valueOf(10.00);
+            Currency currency = Currency.getInstance("EUR");
             LocalDate initDate = LocalDate.of(2025, 1, 1);
             LocalDate endDate = LocalDate.of(2025, 1, 31);
 
             // When
-            Price price = Price.create(productId, value, initDate, endDate);
+            Price price = Price.create(productId, value, currency, initDate, endDate);
 
             // Then
             assertNull(price.getId());
             assertEquals(productId, price.getProductId());
             assertEquals(value, price.getValue());
+            assertEquals(currency, price.getCurrency());
             assertEquals(initDate, price.getInitDate());
             assertEquals(endDate, price.getEndDate());
         }
@@ -38,16 +41,18 @@ class PriceTest {
             Long id = 10L;
             Long productId = 1L;
             BigDecimal value = BigDecimal.valueOf(10.00);
+            Currency currency = Currency.getInstance("USD");
             LocalDate initDate = LocalDate.of(2025, 1, 1);
             LocalDate endDate = LocalDate.of(2025, 1, 31);
 
             // When
-            Price price = Price.of(id, productId, value, initDate, endDate);
+            Price price = Price.of(id, productId, value, currency, initDate, endDate);
 
             // Then
             assertEquals(id, price.getId());
             assertEquals(productId, price.getProductId());
             assertEquals(value, price.getValue());
+            assertEquals(currency, price.getCurrency());
             assertEquals(initDate, price.getInitDate());
             assertEquals(endDate, price.getEndDate());
         }
@@ -57,14 +62,16 @@ class PriceTest {
             // Given
             Long productId = 1L;
             BigDecimal value = BigDecimal.valueOf(10.00);
+            Currency currency = Currency.getInstance("EUR");
             LocalDate initDate = LocalDate.of(2025, 1, 1);
 
             // When
-            Price price = Price.create(productId, value, initDate, null);
+            Price price = Price.create(productId, value, currency, initDate, null);
 
             // Then
             assertNull(price.getEndDate());
             assertEquals(initDate, price.getInitDate());
+            assertEquals(currency, price.getCurrency());
         }
     }
 
@@ -75,12 +82,13 @@ class PriceTest {
         void givenNullProductId_whenCreatingPrice_thenShouldThrowException() {
             // Given
             BigDecimal value = BigDecimal.valueOf(10.00);
+            Currency currency = Currency.getInstance("EUR");
             LocalDate initDate = LocalDate.of(2025, 1, 1);
             LocalDate endDate = LocalDate.of(2025, 1, 31);
 
             // When & Then
             assertThrows(NullPointerException.class, () ->
-                    Price.create(null, value, initDate, endDate)
+                    Price.create(null, value, currency, initDate, endDate)
             );
         }
 
@@ -88,12 +96,27 @@ class PriceTest {
         void givenNullValue_whenCreatingPrice_thenShouldThrowException() {
             // Given
             Long productId = 1L;
+            Currency currency = Currency.getInstance("EUR");
             LocalDate initDate = LocalDate.of(2025, 1, 1);
             LocalDate endDate = LocalDate.of(2025, 1, 31);
 
             // When & Then
             assertThrows(NullPointerException.class, () ->
-                    Price.create(productId, null, initDate, endDate)
+                    Price.create(productId, null, currency, initDate, endDate)
+            );
+        }
+
+        @Test
+        void givenNullCurrency_whenCreatingPrice_thenShouldThrowException() {
+            // Given
+            Long productId = 1L;
+            BigDecimal value = BigDecimal.valueOf(10.00);
+            LocalDate initDate = LocalDate.of(2025, 1, 1);
+            LocalDate endDate = LocalDate.of(2025, 1, 31);
+
+            // When & Then
+            assertThrows(NullPointerException.class, () ->
+                    Price.create(productId, value, null, initDate, endDate)
             );
         }
 
@@ -102,12 +125,13 @@ class PriceTest {
             // Given
             Long productId = 1L;
             BigDecimal value = BigDecimal.ZERO;
+            Currency currency = Currency.getInstance("EUR");
             LocalDate initDate = LocalDate.of(2025, 1, 1);
             LocalDate endDate = LocalDate.of(2025, 1, 31);
 
             // When & Then
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    Price.create(productId, value, initDate, endDate)
+                    Price.create(productId, value, currency, initDate, endDate)
             );
             assertTrue(exception.getMessage().contains("greater than zero"));
         }
@@ -117,12 +141,13 @@ class PriceTest {
             // Given
             Long productId = 1L;
             BigDecimal value = BigDecimal.valueOf(-10.00);
+            Currency currency = Currency.getInstance("EUR");
             LocalDate initDate = LocalDate.of(2025, 1, 1);
             LocalDate endDate = LocalDate.of(2025, 1, 31);
 
             // When & Then
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    Price.create(productId, value, initDate, endDate)
+                    Price.create(productId, value, currency, initDate, endDate)
             );
             assertTrue(exception.getMessage().contains("greater than zero"));
         }
@@ -132,11 +157,12 @@ class PriceTest {
             // Given
             Long productId = 1L;
             BigDecimal value = BigDecimal.valueOf(10.00);
+            Currency currency = Currency.getInstance("EUR");
             LocalDate endDate = LocalDate.of(2025, 1, 31);
 
             // When & Then
             assertThrows(NullPointerException.class, () ->
-                    Price.create(productId, value, null, endDate)
+                    Price.create(productId, value, currency, null, endDate)
             );
         }
 
@@ -145,12 +171,13 @@ class PriceTest {
             // Given
             Long productId = 1L;
             BigDecimal value = BigDecimal.valueOf(10.00);
+            Currency currency = Currency.getInstance("EUR");
             LocalDate initDate = LocalDate.of(2025, 1, 31);
             LocalDate endDate = LocalDate.of(2025, 1, 1);
 
             // When & Then
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    Price.create(productId, value, initDate, endDate)
+                    Price.create(productId, value, currency, initDate, endDate)
             );
             assertTrue(exception.getMessage().contains("after or equal"));
         }
@@ -160,11 +187,12 @@ class PriceTest {
             // Given
             Long productId = 1L;
             BigDecimal value = BigDecimal.valueOf(10.00);
+            Currency currency = Currency.getInstance("EUR");
             LocalDate date = LocalDate.of(2025, 1, 1);
 
             // When & Then
             assertDoesNotThrow(() ->
-                    Price.create(productId, value, date, date)
+                    Price.create(productId, value, currency, date, date)
             );
         }
     }
@@ -175,10 +203,11 @@ class PriceTest {
         @Test
         void givenSequentialRanges_whenCheckingOverlap_thenShouldNotOverlap() {
             // Given: Two sequential prices without gap
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
-            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 28));
 
             // When & Then
@@ -189,10 +218,11 @@ class PriceTest {
         @Test
         void givenIntersectingRanges_whenCheckingOverlap_thenShouldOverlap() {
             // Given: Two prices with overlapping ranges
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
-            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 1, 15), LocalDate.of(2025, 2, 15));
 
             // When & Then
@@ -203,10 +233,11 @@ class PriceTest {
         @Test
         void givenOneRangeContainsAnother_whenCheckingOverlap_thenShouldOverlap() {
             // Given: One price completely contains another
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31));
 
-            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 31));
 
             // When & Then
@@ -217,10 +248,11 @@ class PriceTest {
         @Test
         void givenFirstPriceIsOpenEnded_whenCheckingOverlap_thenShouldOverlap() {
             // Given: First price without end date (open-ended)
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), null);
 
-            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 6, 1), LocalDate.of(2025, 6, 30));
 
             // When & Then
@@ -231,10 +263,11 @@ class PriceTest {
         @Test
         void givenBothPricesAreOpenEnded_whenCheckingOverlap_thenShouldOverlap() {
             // Given: Both prices without end date
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), null);
 
-            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 6, 1), null);
 
             // When & Then
@@ -245,10 +278,11 @@ class PriceTest {
         @Test
         void givenOpenEndedPriceStartsAfterClosedEnds_whenCheckingOverlap_thenShouldNotOverlap() {
             // Given: Open-ended price starts after closed price ends
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
-            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 2, 1), null);
 
             // When & Then
@@ -259,10 +293,11 @@ class PriceTest {
         @Test
         void givenDifferentProducts_whenCheckingOverlap_thenShouldNotOverlap() {
             // Given: Two prices with same dates but different products
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
-            Price price2 = Price.create(2L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(2L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
             // When & Then
@@ -273,7 +308,8 @@ class PriceTest {
         @Test
         void givenNullOtherPrice_whenCheckingOverlap_thenShouldNotOverlap() {
             // Given
-            Price price = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
             // When & Then
@@ -283,15 +319,32 @@ class PriceTest {
         @Test
         void givenRangesShareOneDay_whenCheckingOverlap_thenShouldOverlap() {
             // Given: Ranges that share only the boundary date
-            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 15));
 
-            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00),
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), currency,
                     LocalDate.of(2025, 1, 15), LocalDate.of(2025, 1, 31));
 
             // When & Then
             assertTrue(price1.overlaps(price2));
             assertTrue(price2.overlaps(price1));
+        }
+
+        @Test
+        void givenDifferentCurrencies_whenCheckingOverlap_thenShouldNotOverlap() {
+            // Given: Two prices with same dates and product but different currencies
+            Currency eur = Currency.getInstance("EUR");
+            Currency usd = Currency.getInstance("USD");
+            Price price1 = Price.create(1L, BigDecimal.valueOf(10.00), eur,
+                    LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
+
+            Price price2 = Price.create(1L, BigDecimal.valueOf(12.00), usd,
+                    LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
+
+            // When & Then
+            assertFalse(price1.overlaps(price2));
+            assertFalse(price2.overlaps(price1));
         }
     }
 
@@ -301,10 +354,12 @@ class PriceTest {
         @Test
         void givenSameId_whenComparingPrices_thenShouldBeEqual() {
             // Given
-            Price price1 = Price.of(1L, 100L, BigDecimal.valueOf(10.00),
+            Currency currency1 = Currency.getInstance("EUR");
+            Currency currency2 = Currency.getInstance("USD");
+            Price price1 = Price.of(1L, 100L, BigDecimal.valueOf(10.00), currency1,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
-            Price price2 = Price.of(1L, 200L, BigDecimal.valueOf(20.00),
+            Price price2 = Price.of(1L, 200L, BigDecimal.valueOf(20.00), currency2,
                     LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 28));
 
             // When & Then
@@ -315,10 +370,11 @@ class PriceTest {
         @Test
         void givenDifferentId_whenComparingPrices_thenShouldNotBeEqual() {
             // Given
-            Price price1 = Price.of(1L, 100L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price1 = Price.of(1L, 100L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
-            Price price2 = Price.of(2L, 100L, BigDecimal.valueOf(10.00),
+            Price price2 = Price.of(2L, 100L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
             // When & Then
@@ -328,7 +384,8 @@ class PriceTest {
         @Test
         void givenSameInstance_whenComparingPrice_thenShouldBeEqual() {
             // Given
-            Price price = Price.create(1L, BigDecimal.valueOf(10.00),
+            Currency currency = Currency.getInstance("EUR");
+            Price price = Price.create(1L, BigDecimal.valueOf(10.00), currency,
                     LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
             // When & Then

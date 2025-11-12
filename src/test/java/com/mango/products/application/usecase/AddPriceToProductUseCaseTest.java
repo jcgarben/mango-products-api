@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Currency;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,19 +43,21 @@ class AddPriceToProductUseCaseTest {
         // Given
         Long productId = 1L;
         BigDecimal value = BigDecimal.valueOf(10.99);
+        String currencyCode = "EUR";
+        Currency currency = Currency.getInstance(currencyCode);
         LocalDate initDate = LocalDate.of(2025, 1, 1);
         LocalDate endDate = LocalDate.of(2025, 1, 31);
 
         Product product = Product.of(productId, "Product", "Product Description");
-        Price savedPrice = Price.of(1L, productId, value, initDate, endDate);
+        Price savedPrice = Price.of(1L, productId, value, currency, initDate, endDate);
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        when(priceRepository.findByProductId(productId)).thenReturn(Collections.emptyList());
+        when(priceRepository.findByProductIdAndCurrency(productId, currencyCode)).thenReturn(Collections.emptyList());
         when(priceRepository.save(any(Price.class))).thenReturn(savedPrice);
         doNothing().when(overlapValidator).validate(any(Price.class), anyList());
 
         // When
-        Price result = addPriceToProductUseCase.execute(productId, value, initDate, endDate);
+        Price result = addPriceToProductUseCase.execute(productId, value, currencyCode, initDate, endDate);
 
         // Then
         assertNotNull(result);
@@ -65,7 +68,7 @@ class AddPriceToProductUseCaseTest {
         assertEquals(endDate, result.getEndDate());
 
         verify(productRepository, times(1)).findById(productId);
-        verify(priceRepository, times(1)).findByProductId(productId);
+        verify(priceRepository, times(1)).findByProductIdAndCurrency(productId, currencyCode);
         verify(overlapValidator, times(1)).validate(any(Price.class), anyList());
         verify(priceRepository, times(1)).save(any(Price.class));
     }
@@ -75,6 +78,7 @@ class AddPriceToProductUseCaseTest {
         // Given
         Long productId = 999L;
         BigDecimal value = BigDecimal.valueOf(10.99);
+        String currencyCode = "EUR";
         LocalDate initDate = LocalDate.of(2025, 1, 1);
         LocalDate endDate = LocalDate.of(2025, 1, 31);
 
@@ -83,12 +87,12 @@ class AddPriceToProductUseCaseTest {
         // When & Then
         ProductNotFoundException exception = assertThrows(
             ProductNotFoundException.class,
-            () -> addPriceToProductUseCase.execute(productId, value, initDate, endDate)
+            () -> addPriceToProductUseCase.execute(productId, value, currencyCode, initDate, endDate)
         );
 
         assertTrue(exception.getMessage().contains("999"));
         verify(productRepository, times(1)).findById(productId);
-        verify(priceRepository, never()).findByProductId(any());
+        verify(priceRepository, never()).findByProductIdAndCurrency(any(), any());
         verify(overlapValidator, never()).validate(any(), any());
         verify(priceRepository, never()).save(any());
     }
@@ -98,27 +102,29 @@ class AddPriceToProductUseCaseTest {
         // Given
         Long productId = 1L;
         BigDecimal value = BigDecimal.valueOf(10.99);
+        String currencyCode = "EUR";
+        Currency currency = Currency.getInstance(currencyCode);
         LocalDate initDate = LocalDate.of(2025, 1, 15);
         LocalDate endDate = LocalDate.of(2025, 2, 15);
 
         Product product = Product.of(productId, "Product", "Product Description");
-        Price existingPrice = Price.of(1L, productId, BigDecimal.valueOf(9.99),
+        Price existingPrice = Price.of(1L, productId, BigDecimal.valueOf(9.99), currency,
             LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31));
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        when(priceRepository.findByProductId(productId)).thenReturn(Collections.singletonList(existingPrice));
+        when(priceRepository.findByProductIdAndCurrency(productId, currencyCode)).thenReturn(Collections.singletonList(existingPrice));
         doThrow(new PriceOverlapException(productId, initDate, endDate))
             .when(overlapValidator).validate(any(Price.class), anyList());
 
         // When & Then
         PriceOverlapException exception = assertThrows(
             PriceOverlapException.class,
-            () -> addPriceToProductUseCase.execute(productId, value, initDate, endDate)
+            () -> addPriceToProductUseCase.execute(productId, value, currencyCode, initDate, endDate)
         );
 
         assertTrue(exception.getMessage().contains("1"));
         verify(productRepository, times(1)).findById(productId);
-        verify(priceRepository, times(1)).findByProductId(productId);
+        verify(priceRepository, times(1)).findByProductIdAndCurrency(productId, currencyCode);
         verify(overlapValidator, times(1)).validate(any(Price.class), anyList());
         verify(priceRepository, never()).save(any());
     }
@@ -128,19 +134,21 @@ class AddPriceToProductUseCaseTest {
         // Given
         Long productId = 1L;
         BigDecimal value = BigDecimal.valueOf(10.99);
+        String currencyCode = "EUR";
+        Currency currency = Currency.getInstance(currencyCode);
         LocalDate initDate = LocalDate.of(2025, 1, 1);
         LocalDate endDate = null;
 
         Product product = Product.of(productId, "Product", "Product Description");
-        Price savedPrice = Price.of(1L, productId, value, initDate, endDate);
+        Price savedPrice = Price.of(1L, productId, value, currency, initDate, endDate);
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        when(priceRepository.findByProductId(productId)).thenReturn(Collections.emptyList());
+        when(priceRepository.findByProductIdAndCurrency(productId, currencyCode)).thenReturn(Collections.emptyList());
         when(priceRepository.save(any(Price.class))).thenReturn(savedPrice);
         doNothing().when(overlapValidator).validate(any(Price.class), anyList());
 
         // When
-        Price result = addPriceToProductUseCase.execute(productId, value, initDate, endDate);
+        Price result = addPriceToProductUseCase.execute(productId, value, currencyCode, initDate, endDate);
 
         // Then
         assertNotNull(result);

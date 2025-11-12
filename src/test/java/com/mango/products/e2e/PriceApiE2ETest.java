@@ -16,6 +16,7 @@ class PriceApiE2ETest extends BaseE2ETest {
         String priceRequestBody = """
             {
                 "value": 99.99,
+                "currency": "EUR",
                 "initDate": "2025-01-01",
                 "endDate": "2025-01-31"
             }
@@ -31,6 +32,7 @@ class PriceApiE2ETest extends BaseE2ETest {
             .statusCode(201)
             .body("id", notNullValue())
             .body("value", equalTo(99.99f))
+            .body("currency", equalTo("EUR"))
             .body("initDate", equalTo("2025-01-01"))
             .body("endDate", equalTo("2025-01-31"));
     }
@@ -43,6 +45,7 @@ class PriceApiE2ETest extends BaseE2ETest {
         String firstPrice = """
             {
                 "value": 99.99,
+                "currency": "EUR",
                 "initDate": "2025-01-01",
                 "endDate": "2025-01-31"
             }
@@ -60,6 +63,7 @@ class PriceApiE2ETest extends BaseE2ETest {
         String overlappingPrice = """
             {
                 "value": 89.99,
+                "currency": "EUR",
                 "initDate": "2025-01-15",
                 "endDate": "2025-02-15"
             }
@@ -81,6 +85,7 @@ class PriceApiE2ETest extends BaseE2ETest {
         String priceRequestBody = """
             {
                 "value": 99.99,
+                "currency": "EUR",
                 "initDate": "2025-01-01",
                 "endDate": "2025-01-31"
             }
@@ -102,10 +107,10 @@ class PriceApiE2ETest extends BaseE2ETest {
         Integer productId = createProduct("History Test Product", "Testing history");
 
         String price1 = """
-            {"value": 99.99, "initDate": "2025-01-01", "endDate": "2025-01-31"}
+            {"value": 99.99, "currency": "EUR", "initDate": "2025-01-01", "endDate": "2025-01-31"}
             """;
         String price2 = """
-            {"value": 89.99, "initDate": "2025-02-01", "endDate": "2025-02-28"}
+            {"value": 89.99, "currency": "EUR", "initDate": "2025-02-01", "endDate": "2025-02-28"}
             """;
 
         given().contentType(ContentType.JSON).body(price1)
@@ -128,7 +133,7 @@ class PriceApiE2ETest extends BaseE2ETest {
         Integer productId = createProduct("Date Query Test", "Testing date query");
 
         String priceRequestBody = """
-            {"value": 99.99, "initDate": "2025-01-01", "endDate": "2025-01-31"}
+            {"value": 99.99, "currency": "EUR", "initDate": "2025-01-01", "endDate": "2025-01-31"}
             """;
 
         given().contentType(ContentType.JSON).body(priceRequestBody)
@@ -144,6 +149,7 @@ class PriceApiE2ETest extends BaseE2ETest {
             .body("value", notNullValue())
             .body("value", equalTo(99.99f));
     }
+
 
     // Helper method to create a product and return its ID
     private Integer createProduct(String name, String description) {
