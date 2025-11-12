@@ -140,9 +140,10 @@ mvn spring-boot:run
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 ALTER TABLE product_prices
-ADD CONSTRAINT ux_product_period
+ADD CONSTRAINT ux_product_currency_period
 EXCLUDE USING GIST (
     product_id WITH =,
+    currency WITH =,
     daterange(init_date, end_date, '[]') WITH &&
 );
 ```
@@ -209,6 +210,7 @@ Content-Type: application/json
 
 {
   "value": 99.99,
+  "currency": "EUR",
   "initDate": "2025-01-01",
   "endDate": "2025-06-30"
 }
@@ -219,17 +221,38 @@ Content-Type: application/json
 {
   "id": 1,
   "value": 99.99,
+  "currency": "EUR",
   "initDate": "2025-01-01",
   "endDate": "2025-06-30"
 }
 ```
+
+**💰 Multi-Currency Support:**
+
+You can add prices in different currencies for the same period:
+
+```http
+# Add EUR price
+POST /products/1/prices
+{"value": 99.99, "currency": "EUR", "initDate": "2025-01-01", "endDate": null}
+
+# Add USD price for same period (✅ ALLOWED)
+POST /products/1/prices
+{"value": 119.99, "currency": "USD", "initDate": "2025-01-01", "endDate": null}
+
+# Add another EUR price for same period (❌ CONFLICT - 409)
+POST /products/1/prices
+{"value": 89.99, "currency": "EUR", "initDate": "2025-01-01", "endDate": null}
+```
+
+**Supported currencies:** Any valid ISO 4217 code (EUR, USD, GBP, JPY, CNY, etc.)
 
 ### Get Price History
 ```http
 GET /products/{id}/prices
 ```
 
-**Response:**
+**Response (multiple currencies):**
 ```json
 {
   "id": 1,
@@ -239,12 +262,21 @@ GET /products/{id}/prices
     {
       "id": 1,
       "value": 99.99,
+      "currency": "EUR",
       "initDate": "2025-01-01",
       "endDate": "2025-06-30"
     },
     {
       "id": 2,
+      "value": 119.99,
+      "currency": "USD",
+      "initDate": "2025-01-01",
+      "endDate": "2025-06-30"
+    },
+    {
+      "id": 3,
       "value": 149.99,
+      "currency": "EUR",
       "initDate": "2025-07-01",
       "endDate": null
     }
@@ -252,15 +284,66 @@ GET /products/{id}/prices
 }
 ```
 
+**Filter by currency:**
+```http
+GET /products/{id}/prices?currency=EUR
+```
+
 ### Get Current Price by Date
+
+**Single currency available:**
 ```http
 GET /products/{id}/prices?date=2025-03-15
+```
+
+**Response (when only one currency exists for that date):**
+```json
+{
+  "value": 99.99,
+  "currency": "EUR"
+}
+```
+
+**Multiple currencies available:**
+```http
+GET /products/{id}/prices?date=2025-03-15
+```
+
+**Response (when multiple currencies exist for that date):**
+```json
+{
+  "id": 1,
+  "name": "Zapatillas deportivas",
+  "description": "Modelo 2025 edición limitada",
+  "prices": [
+    {
+      "id": 1,
+      "value": 99.99,
+      "currency": "EUR",
+      "initDate": "2025-01-01",
+      "endDate": "2025-06-30"
+    },
+    {
+      "id": 2,
+      "value": 119.99,
+      "currency": "USD",
+      "initDate": "2025-01-01",
+      "endDate": "2025-06-30"
+    }
+  ]
+}
+```
+
+**Get current price in specific currency:**
+```http
+GET /products/{id}/prices?date=2025-03-15&currency=USD
 ```
 
 **Response:**
 ```json
 {
-  "value": 99.99
+  "value": 119.99,
+  "currency": "USD"
 }
 ```
 
@@ -339,13 +422,14 @@ docker-compose --profile benchmark up --build
 
 ### Price Overlap Prevention
 
-**Challenge:** Ensure that for a given product, no two price periods overlap.
+**Challenge:** Ensure that for a given product, no two price periods overlap **for the same currency**.
 
-**Solution:** PostgreSQL **GIST constraint** with `btree_gist` extension.
+**Solution:** PostgreSQL **GIST constraint** with `btree_gist` extension + currency dimension.
 
 ```sql
 EXCLUDE USING GIST (
     product_id WITH =,
+    currency WITH =,      -- ✅ Overlap validation PER currency
     daterange(init_date, end_date, '[]') WITH &&
 );
 ```
@@ -354,7 +438,23 @@ EXCLUDE USING GIST (
 - ✅ Validation at database level (100% reliable)
 - ✅ Handles open-ended ranges (`endDate = null`)
 - ✅ Prevents race conditions
+- ✅ Allows EUR and USD prices for the same period
+- ✅ Prevents EUR-EUR overlaps while allowing EUR-USD coexistence
 - ✅ No complex application logic needed
+
+### Multi-Currency Support
+
+**Implementation:**
+- Uses `java.util.Currency` (type-safe, validates ISO 4217 codes)
+- Overlap validation considers currency dimension
+- Composite index `(product_id, currency)` for optimal queries
+- Currency filtering in GET endpoints (`?currency=EUR`)
+
+**Key benefits:**
+- 🌍 International pricing support
+- 💱 Same period, different currencies allowed
+- 🔒 Currency-aware overlap prevention
+- 📊 Filter price history by currency
 
 ### Domain-Driven Design
 
