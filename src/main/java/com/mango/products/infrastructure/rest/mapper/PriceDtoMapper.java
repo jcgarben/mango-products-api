@@ -2,6 +2,7 @@ package com.mango.products.infrastructure.rest.mapper;
 
 import com.mango.products.domain.model.Price;
 import com.mango.products.infrastructure.rest.dto.CurrentPriceResponse;
+import com.mango.products.infrastructure.rest.dto.GetProductPrices200Response;
 import com.mango.products.infrastructure.rest.dto.PriceResponse;
 import com.mango.products.infrastructure.rest.dto.ProductPriceHistoryResponse;
 
@@ -20,13 +21,13 @@ public class PriceDtoMapper {
         return response;
     }
 
-    public static CurrentPriceResponse toCurrentPriceResponse(Price price) {
+    public static GetProductPrices200Response toCurrentPriceResponse(Price price) {
         CurrentPriceResponse response = new CurrentPriceResponse();
         response.setValue(price.getValue().doubleValue());
         return response;
     }
 
-    public static ProductPriceHistoryResponse toHistoryResponse(Long productId, String name, String description, List<Price> prices) {
+    public static GetProductPrices200Response toHistoryResponse(Long productId, String name, String description, List<Price> prices) {
         ProductPriceHistoryResponse response = new ProductPriceHistoryResponse();
         response.setId(productId);
         response.setName(name);
@@ -37,5 +38,4 @@ public class PriceDtoMapper {
         return response;
     }
 }
-
 
