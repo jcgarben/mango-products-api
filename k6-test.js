@@ -97,8 +97,12 @@ export default function (data) {
       const productId = JSON.parse(createProductRes.body).id;
 
       // Add price to the created product
+      const currencies = ['EUR', 'USD', 'GBP'];
+      const randomCurrency = currencies[Math.floor(Math.random() * currencies.length)];
+
       const pricePayload = JSON.stringify({
         value: Math.floor(Math.random() * 200) + 10,
+        currency: randomCurrency,
         initDate: '2025-01-01',
         endDate: '2025-12-31'
       });
@@ -161,13 +165,38 @@ export default function (data) {
 
     // Query current price by date (50% of the time)
     if (Math.random() < 0.5) {
+      const queryDate = '2025-06-15';
+
+      // 50% with currency filter, 50% without
+      let queryUrl = `${BASE_URL}/products/${productId}/prices?date=${queryDate}`;
+      if (Math.random() < 0.5) {
+        const currencies = ['EUR', 'USD', 'GBP'];
+        const randomCurrency = currencies[Math.floor(Math.random() * currencies.length)];
+        queryUrl += `&currency=${randomCurrency}`;
+      }
+
       const getCurrentPriceRes = http.get(
-        `${BASE_URL}/products/${productId}/prices?date=2025-06-15`,
+        queryUrl,
         { tags: { name: 'GetCurrentPrice' } }
       );
 
       check(getCurrentPriceRes, {
         'current price retrieved or not found': (r) => r.status === 200 || r.status === 404,
+      });
+    }
+
+    // Query price history by currency (20% of the time)
+    if (Math.random() < 0.2) {
+      const currencies = ['EUR', 'USD', 'GBP'];
+      const randomCurrency = currencies[Math.floor(Math.random() * currencies.length)];
+
+      const getPricesByCurrencyRes = http.get(
+        `${BASE_URL}/products/${productId}/prices?currency=${randomCurrency}`,
+        { tags: { name: 'GetPricesByCurrency' } }
+      );
+
+      check(getPricesByCurrencyRes, {
+        'prices by currency retrieved or not found': (r) => r.status === 200 || r.status === 404,
       });
     }
   }
