@@ -2,6 +2,7 @@ package com.mango.products.application.usecase;
 
 import com.mango.products.application.port.out.PriceRepository;
 import com.mango.products.application.port.out.ProductRepository;
+import com.mango.products.domain.exception.InvalidCurrencyException;
 import com.mango.products.domain.exception.ProductNotFoundException;
 import com.mango.products.domain.model.Price;
 import com.mango.products.domain.model.Product;
@@ -30,13 +31,22 @@ public class AddPriceToProductUseCase {
         this.overlapValidator = overlapValidator;
     }
 
-    public Price execute(Long productId, BigDecimal value, LocalDate initDate, LocalDate endDate) {
+    public Price execute(Long productId, BigDecimal value, String currencyCode, LocalDate initDate, LocalDate endDate) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        Price newPrice = Price.create(product.getId(), value, initDate, endDate);
+        // Validate currency code using Java's Currency API
+        java.util.Currency currency;
+        try {
+            currency = java.util.Currency.getInstance(currencyCode);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidCurrencyException(currencyCode);
+        }
 
-        List<Price> existingPrices = priceRepository.findByProductId(productId);
+        Price newPrice = Price.create(product.getId(), value, currency, initDate, endDate);
+
+        // Validate overlap only for prices with the same currency
+        List<Price> existingPrices = priceRepository.findByProductIdAndCurrency(productId, currencyCode);
         overlapValidator.validate(newPrice, existingPrices);
 
         return priceRepository.save(newPrice);

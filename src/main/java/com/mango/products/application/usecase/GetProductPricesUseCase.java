@@ -28,9 +28,19 @@ public class GetProductPricesUseCase {
         return priceRepository.findByProductId(productId);
     }
 
-    public Optional<Price> getCurrentPrice(Long productId, LocalDate date) {
+    public List<Price> getAllPricesByCurrency(Long productId, String currencyCode) {
+        verifyProductExists(productId);
+        return priceRepository.findByProductIdAndCurrency(productId, currencyCode);
+    }
+
+    public List<Price> getCurrentPrices(Long productId, LocalDate date) {
         verifyProductExists(productId);
         return priceRepository.findByProductIdAndDate(productId, date);
+    }
+
+    public Optional<Price> getCurrentPriceByCurrency(Long productId, String currencyCode, LocalDate date) {
+        verifyProductExists(productId);
+        return priceRepository.findByProductIdAndCurrencyAndDate(productId, currencyCode, date);
     }
 
     private void verifyProductExists(Long productId) {
