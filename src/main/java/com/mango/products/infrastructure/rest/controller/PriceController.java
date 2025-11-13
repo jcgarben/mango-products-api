@@ -15,6 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+import jakarta.validation.Valid;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +39,7 @@ public class PriceController implements PricesApi {
     }
 
     @Override
-    public ResponseEntity<PriceResponse> addPriceToProduct(Long id, AddPriceRequest request) {
+    public ResponseEntity<PriceResponse> addPriceToProduct(@PathVariable("id") Long id, @Valid @RequestBody AddPriceRequest request) {
         Price price = addPriceToProductUseCase.execute(
             id,
             java.math.BigDecimal.valueOf(request.getValue()),
@@ -48,7 +52,9 @@ public class PriceController implements PricesApi {
     }
 
     @Override
-    public ResponseEntity<GetProductPrices200Response> getProductPrices(Long id, LocalDate date, String currency) {
+    public ResponseEntity<GetProductPrices200Response> getProductPrices(@PathVariable("id") Long id,
+                                                                        @PathVariable("date") LocalDate date,
+                                                                        @PathVariable("currency")String currency) {
         if (date != null) {
             // Get current price(s) for specific date
             if (currency != null) {
