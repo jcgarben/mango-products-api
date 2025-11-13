@@ -1,7 +1,7 @@
 package com.mango.products.infrastructure.persistence.adapter;
 
+import com.mango.products.application.port.exception.RepositoryConstraintViolationException;
 import com.mango.products.application.port.out.ProductRepository;
-import com.mango.products.domain.exception.ProductAlreadyExistsException;
 import com.mango.products.domain.model.Product;
 import com.mango.products.infrastructure.persistence.entity.ProductEntity;
 import com.mango.products.infrastructure.persistence.mapper.ProductMapper;
@@ -27,7 +27,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
             ProductEntity saved = jpaRepository.save(entity);
             return ProductMapper.toDomain(saved);
         } catch (DataIntegrityViolationException e) {
-            throw new ProductAlreadyExistsException(product.getName());
+            throw new RepositoryConstraintViolationException("Data constraint violation while saving product", e);
         }
     }
 

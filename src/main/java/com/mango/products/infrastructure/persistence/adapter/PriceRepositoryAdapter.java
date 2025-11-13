@@ -1,7 +1,7 @@
 package com.mango.products.infrastructure.persistence.adapter;
 
+import com.mango.products.application.port.exception.RepositoryConstraintViolationException;
 import com.mango.products.application.port.out.PriceRepository;
-import com.mango.products.domain.exception.PriceOverlapException;
 import com.mango.products.domain.model.Price;
 import com.mango.products.infrastructure.persistence.entity.PriceEntity;
 import com.mango.products.infrastructure.persistence.mapper.PriceMapper;
@@ -30,11 +30,7 @@ public class PriceRepositoryAdapter implements PriceRepository {
             PriceEntity saved = jpaRepository.save(entity);
             return PriceMapper.toDomain(saved);
         } catch (DataIntegrityViolationException e) {
-            throw new PriceOverlapException(
-                price.getProductId(),
-                price.getInitDate(),
-                price.getEndDate()
-            );
+            throw new RepositoryConstraintViolationException("Data constraint violation while saving price", e);
         }
     }
 
