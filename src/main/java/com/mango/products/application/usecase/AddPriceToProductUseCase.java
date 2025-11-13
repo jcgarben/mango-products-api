@@ -1,8 +1,10 @@
 package com.mango.products.application.usecase;
 
+import com.mango.products.application.port.exception.RepositoryConstraintViolationException;
 import com.mango.products.application.port.out.PriceRepository;
 import com.mango.products.application.port.out.ProductRepository;
 import com.mango.products.domain.exception.InvalidCurrencyException;
+import com.mango.products.domain.exception.PriceOverlapException;
 import com.mango.products.domain.exception.ProductNotFoundException;
 import com.mango.products.domain.model.Price;
 import com.mango.products.domain.model.Product;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Currency;
 import java.util.List;
 
 @Service
@@ -36,7 +39,7 @@ public class AddPriceToProductUseCase {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         // Validate currency code using Java's Currency API
-        java.util.Currency currency;
+        Currency currency;
         try {
             currency = java.util.Currency.getInstance(currencyCode);
         } catch (IllegalArgumentException e) {
@@ -49,6 +52,10 @@ public class AddPriceToProductUseCase {
         List<Price> existingPrices = priceRepository.findByProductIdAndCurrency(productId, currencyCode);
         overlapValidator.validate(newPrice, existingPrices);
 
-        return priceRepository.save(newPrice);
+        try {
+            return priceRepository.save(newPrice);
+        } catch (RepositoryConstraintViolationException e) {
+            throw new PriceOverlapException(productId, initDate, endDate);
+        }
     }
 }

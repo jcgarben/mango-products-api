@@ -1,6 +1,8 @@
 package com.mango.products.application.usecase;
 
+import com.mango.products.application.port.exception.RepositoryConstraintViolationException;
 import com.mango.products.application.port.out.ProductRepository;
+import com.mango.products.domain.exception.ProductAlreadyExistsException;
 import com.mango.products.domain.model.Product;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,10 @@ public class CreateProductUseCase {
 
     public Product execute(String name, String description) {
         Product product = Product.create(name, description);
-        return productRepository.save(product);
+        try {
+            return productRepository.save(product);
+        } catch (RepositoryConstraintViolationException e) {
+            throw new ProductAlreadyExistsException(name);
+        }
     }
 }
